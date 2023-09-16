@@ -23,6 +23,7 @@ if not os.path.exists(app.config['JSON_OUTPUT_FOLDER']):
 
 if not os.path.exists(app.config['VIDEO_OUTPUT_FOLDER']):
     os.makedirs(app.config['VIDEO_OUTPUT_FOLDER'])
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -79,6 +80,7 @@ def upload():
 
         return redirect(url_for('result', video_filename='output.mp4', json_filename='output.json'))
 
+       
     
 @app.route('/result')
 def result():
