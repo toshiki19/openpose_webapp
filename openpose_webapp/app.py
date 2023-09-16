@@ -1,11 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, flash
+from werkzeug.utils import secure_filename
 import os
 import subprocess
 import json
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'uploads'
+UPLOAD_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads'
 JSON_OUTPUT_FOLDER = 'json_output'
 VIDEO_OUTPUT_FOLDER = 'video_output'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
@@ -31,17 +32,30 @@ def index():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    #if 'video' not in request.files:
-        #return redirect(request.url)
-    
-    #video_file = request.files['video']
-    #if video_file.filename == '':
-        #return redirect(request.url)
-    
-    #if video_file and allowed_file(video_file.filename):
-        # アップロードされた動画を保存
-        # video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file.filename)
-        video_path = "C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads\\video.avi" # ここで video_path を定義す
+    if 'file' not in request.files:
+        flash('No file part')
+        return redirect(request.url)
+
+    file = request.files['file']
+
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(request.url)
+
+    if file:
+        if allowed_file(file.filename):
+            # アップロードされた動画を保存
+            video_filename = secure_filename(file.filename)
+            video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
+            file.save(video_path)
+
+        # 以降の処理で video_path を使用できます
+
+        else:
+            flash('Invalid file type')
+            return redirect(request.url)
+        
+        # video_path = "C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads\\video.avi" # ここで video_path を定義す
 
             # カレントディレクトリをOpenPoseのディレクトリに変更
         openpose_directory = r'C:\\openpose-1.7.0-binaries-win64-gpu-python3.7-flir-3d_recommended\\openpose'
@@ -62,7 +76,7 @@ def upload():
         # コマンドを実行
         print("Executing OpenPose command:", openpose_command)
         subprocess.run(openpose_command, shell=True)
-    
+
         return redirect(url_for('result', video_filename='output.mp4', json_filename='output.json'))
 
     
@@ -78,6 +92,9 @@ def result():
         with open(json_path, 'r') as json_file:
             json_data = json.load(json_file)
     
+        # 動画ファイルのパスを設定
+    video_path = os.path.join(app.config['VIDEO_OUTPUT_FOLDER'], video_filename)
+
     return render_template('result.html', video_filename=video_filename, json_data=json_data)
 
 if __name__ == '__main__':
