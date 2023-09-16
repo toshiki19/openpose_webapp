@@ -22,6 +22,7 @@ if not os.path.exists(app.config['JSON_OUTPUT_FOLDER']):
 
 if not os.path.exists(app.config['VIDEO_OUTPUT_FOLDER']):
     os.makedirs(app.config['VIDEO_OUTPUT_FOLDER'])
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
@@ -41,6 +42,7 @@ def upload():
     #if video_file and allowed_file(video_file.filename):
         # アップロードされた動画を保存
         # video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_file.filename)
+
         video_path = "C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads\\video.avi" # ここで video_path を定義す
 
             # カレントディレクトリをOpenPoseのディレクトリに変更
@@ -65,6 +67,7 @@ def upload():
     
         return redirect(url_for('result', video_filename='output.mp4', json_filename='output.json'))
 
+       
     
 @app.route('/result')
 def result():
