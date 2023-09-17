@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenPose Analysis Result</title>
+</head>
+<body>
+    <h1>OpenPose Analysis Result</h1>
+    
+    <!-- キーポイントデータを描画するキャンバス -->
+    <!-- 解析結果を表示する要素をここに追加 -->
+<div id="keypoints-container">
+    <!-- キーポイントを表示するためのキャンバス -->
+    <canvas id="keypoints-canvas" width="640" height="480"></canvas>
+</div>
+
+    <!-- テキストデータを表示する要素 -->
+    <div id="textData">
+        <!-- 解析結果のテキストデータをここに表示 -->
+
+        
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
