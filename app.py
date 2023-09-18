@@ -63,7 +63,7 @@ def upload():
             json_output_path = os.path.join(json_output_directory, 'output.json')
 
             # OpenPoseの実行コマンド
-            openpose_command = f'bin\\OpenPoseDemo.exe --video "{video_path}" --write_json "{json_output_directory}" .'
+            openpose_command = f'bin\\OpenPoseDemo.exe --video "{video_path}" --write_json "{json_output_directory}" --frame_step 3 .'
 
             # コマンドを実行
             print("Executing OpenPose command:", openpose_command)
