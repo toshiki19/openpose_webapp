@@ -1,3 +1,4 @@
+<!-- result.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,19 +8,19 @@
 </head>
 <body>
     <h1>OpenPose Analysis Result</h1>
+
+    <!-- 動画を表示するビデオタグ -->
+    <!-- <video width="640" height="480" controls>
+        <source src="{{ video_url }}" type="video/{{ video_extension }}">
+        Your browser does not support the video tag.
+    </video> -->
     
-    <!-- キーポイントデータを描画するキャンバス -->
-    <!-- 解析結果を表示する要素をここに追加 -->
-<div id="keypoints-container">
-    <!-- キーポイントを表示するためのキャンバス -->
-    <canvas id="keypoints-canvas" width="640" height="480"></canvas>
-</div>
+    <video width="640" height="480" controls>
+        <source src="{{ url_for('static', filename='video_output/test_output.avi') }}" type="video/x-msvideo">
+        Your browser does not support the video tag.
+    </video>
 
-    <!-- テキストデータを表示する要素 -->
-    <div id="textData">
-        <!-- 解析結果のテキストデータをここに表示 -->
-    </div>
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <p><a href="{{ url_for('index') }}">Back to Upload</a></p>
 </body>
 </html>
