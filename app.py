@@ -5,12 +5,13 @@ import subprocess
 import json
 import numpy as np
 import cv2  # OpenCVをインポート
+import shutil
 
 app = Flask(__name__)
 
 UPLOAD_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads'
 JSON_OUTPUT_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\json_output'
-VIDEO_OUTPUT_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\video_output'
+VIDEO_OUTPUT_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\static\\video_output'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -101,8 +102,17 @@ def create_new_video(input_video_path, output_video_path, start_frame, end_frame
 
     frame_width = int(cap.get(3))
     frame_height = int(cap.get(4))
-    out = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (frame_width, frame_height))
-    
+    # out = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (frame_width, frame_height))
+
+    # 動画のフレームレートを取得
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+
+    # MP4コーデックを指定して新しい動画を作成
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    # fourcc = cv2.VideoWriter_fourcc(*'H264')
+    # out = cv2.VideoWriter(output_video_path, fourcc, 30, (frame_width, frame_height))
+    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+
     frame_number = 0
     while True:
         ret, frame = cap.read()
@@ -115,18 +125,6 @@ def create_new_video(input_video_path, output_video_path, start_frame, end_frame
             out.write(frame)
 
     cap.release()
-    out.release()
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame_number += 1
-
-        if frame_number >= start_frame and frame_number <= end_frame:
-            out.write(frame)
-
-    # 最後に out.release() で動画を閉じます
     out.release()
 
 @app.route('/result')
@@ -142,13 +140,13 @@ def result():
     # 動画ファイルの拡張子を取得
     video_extension = os.path.splitext(video_filename)[-1].lstrip('.')
 
-    # video_urlを正しく生成
+    # video_urlを正しく生成（修正）
     video_url = url_for('static', filename=f'video_output/{video_filename}')
 
     # ログを出力
     print("Video URL:", video_url)
     print("Video Extension:", video_extension)
-    
+
     return render_template('result.html', video_url=video_url, video_extension=video_extension)
 
 
