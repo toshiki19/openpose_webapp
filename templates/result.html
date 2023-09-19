@@ -7,16 +7,18 @@
     <title>OpenPose Analysis Result</title>
 </head>
 <body>
-    <h1>OpenPose Analysis Result</h1>
-
-    <!-- 動画を表示するビデオタグ -->
-    <!-- <video width="640" height="480" controls>
-        <source src="{{ video_url }}" type="video/{{ video_extension }}">
-        Your browser does not support the video tag.
-    </video> -->
+    <h1>分析前</h1>
     
     <video width="640" height="480" controls>
-        <source src="{{ url_for('static', filename='video_output/test_output.avi') }}" type="video/x-msvideo">
+        <!-- <source src="{{ video_url }}" type="video/{{ video_extension }}"> -->
+        <source src="{{ url_for('static', filename='video_output/test.mp4') }}" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <h1>分析後</h1>
+    
+    <video width="640" height="480" controls>
+        <source src="{{ video_url }}" type="video/{{ video_extension }}">
+        <!-- <source src="{{ url_for('static', filename='video_output/test_output.mp4') }}" type="video/mp4"> -->
         Your browser does not support the video tag.
     </video>
 
