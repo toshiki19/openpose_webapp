@@ -1,33 +1,54 @@
-<!-- result.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenPose Analysis Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>Result</title>
 </head>
 <body>
-    <h1>分析前</h1>
-    
-    <video width="640" height="480" controls>
-        <source src="{{ video_url }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-    
-    <h1>分析後</h1>
-    
-    <video width="640" height="480" controls>
-        <!-- Updated source for the video clip after analysis -->
-        <source src="{{ segment_video_url }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-    
-    <h2>分析フレーム</h2>
-    <!-- Display the saved frames as images -->
-    {% for image_url in image_urls %}
-    <img src="{{ image_url }}" width="320" height="240">
-    {% endfor %}
-
+    <div class="container">
+        <h1>Analysis Result</h1>
+        
+        <!-- Repeat the analysis section 5 times -->
+        <div class="analysis-section">
+            <div class="analysis-item">
+                <div class="video-container">
+                    <video controls>
+                        <source src="{{ video_url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div class="image-container">
+                    <img src="{{ image_url }}" alt="Analysis Image">
+                </div>
+                <div class="result-info">
+                    <p>Analysis Result:</p>
+                    <p>{{ video_filename }} Analysis</p>
+                    <p>Analysis URL:</p>
+                    <a href="{{ segment_video_url }}">{{ segment_video_url }}</a>
+                </div>
+            </div>
+            <div class="analysis-item">
+                <div class="video-container">
+                    <video controls>
+                        <source src="{{ video_url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <div class="image-container">
+                    <img src="{{ image_url }}" alt="Analysis Image">
+                </div>
+                <div class="result-info">
+                    <p>Analysis Result:</p>
+                    <p>{{ video_filename }} Analysis</p>
+                    <p>Analysis URL:</p>
+                    <a href="{{ segment_video_url }}">{{ segment_video_url }}</a>
+                </div>
+            </div>
+            <!-- Repeat the above analysis item 4 more times -->
+        </div>
+    </div>
     <p><a href="{{ url_for('index') }}">Back to Upload</a></p>
 </body>
 </html>
