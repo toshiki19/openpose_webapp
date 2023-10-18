@@ -1,54 +1,97 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <title>Result</title>
+    <title>Result Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Analysis Result</h1>
+    <div class="centered">
+        <h1>Uploaded Videos</h1>
+        <ul>
+            {% for video in uploaded_videos %}
+                <video width="500" height="240" controls preload="none">
+                    <source src="{{ url_for('static', filename='video_output/' + video) }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="action-videos">
+        <div class="action-category">
+            <h1>Arm Crossed Videos</h1>
+            <ul class="video-list">
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img src="{{ url_for('static', filename='images/arm_crossed_icon.jpg') }}" alt="Arm Crossed Icon">
+                    </div>
+                    <div class="video-count">
+                        Total: {{ arm_crossed_videos|length }} videos
+                    </div>
+                </div>
+                {% for video in arm_crossed_videos %}
+                    <li>
+                        <div class="video-details">
+                            <a href="javascript:void(0);" class="popup-link" data-video-src="{{ url_for('static', filename='arm_crossed_folder/' + video) }}">{{ video }}</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
         
-        <!-- Repeat the analysis section 5 times -->
-        <div class="analysis-section">
-            <div class="analysis-item">
-                <div class="video-container">
-                    <video controls>
-                        <source src="{{ video_url }}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
+        <div class="action-category">
+            <h1>Head Scratching Videos</h1>
+            <ul class="video-list">
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img src="{{ url_for('static', filename='images/head_scratching_icon.jpg') }}" alt="Head Scratching Icon">
+                    </div>
+                    <div class="video-count">
+                        Total: {{ head_scratching_videos|length }} videos
+                    </div>
                 </div>
-                <div class="image-container">
-                    <img src="{{ image_url }}" alt="Analysis Image">
-                </div>
-                <div class="result-info">
-                    <p>Analysis Result:</p>
-                    <p>{{ video_filename }} Analysis</p>
-                    <p>Analysis URL:</p>
-                    <a href="{{ segment_video_url }}">{{ segment_video_url }}</a>
-                </div>
-            </div>
-            <div class="analysis-item">
-                <div class="video-container">
-                    <video controls>
-                        <source src="{{ video_url }}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                <div class="image-container">
-                    <img src="{{ image_url }}" alt="Analysis Image">
-                </div>
-                <div class="result-info">
-                    <p>Analysis Result:</p>
-                    <p>{{ video_filename }} Analysis</p>
-                    <p>Analysis URL:</p>
-                    <a href="{{ segment_video_url }}">{{ segment_video_url }}</a>
-                </div>
-            </div>
-            <!-- Repeat the above analysis item 4 more times -->
+                {% for video in head_scratching_videos %}
+                    <li>
+                        <div class="video-details">
+                            <a href="javascript:void(0);" class="popup-link" data-video-src="{{ url_for('static', filename='head_scratching_folder/' + video) }}">{{ video }}</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
-    <p><a href="{{ url_for('index') }}">Back to Upload</a></p>
+    <div class="back-button">
+        <a href="/">戻る</a>
+    </div>
+
+    <!-- ポップアップ用のコンテンツ -->
+    <div class="popup" id="popup-container">
+        <div class="popup-content">
+            <span class="popup-close" id="popup-close">&times;</span>
+            <video class="popup-video" id="popup-video" controls></video>
+        </div>
+    </div>
+
+    <script>
+        // ポップアップを開く処理
+        const popupLinks = document.querySelectorAll('.popup-link');
+        const popupContainer = document.getElementById('popup-container');
+        const popupVideo = document.getElementById('popup-video');
+        const popupClose = document.getElementById('popup-close');
+
+        popupLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const videoSrc = link.getAttribute('data-video-src');
+                popupVideo.src = videoSrc;
+                popupContainer.style.display = 'block';
+            });
+        });
+
+        // ポップアップを閉じる処理
+        popupClose.addEventListener('click', () => {
+            popupVideo.src = '';
+            popupContainer.style.display = 'none';
+        });
+    </script>
 </body>
 </html>

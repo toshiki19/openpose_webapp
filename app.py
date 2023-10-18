@@ -1,29 +1,32 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file, flash, send_file
 from werkzeug.utils import secure_filename
+from moviepy.editor import VideoFileClip
 import os
 import subprocess
 import json
 import numpy as np
 import cv2  # OpenCVをインポート
 import shutil
+import re
 
 app = Flask(__name__)
 
-UPLOAD_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\uploads'
+# フォルダの設定
 JSON_OUTPUT_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\json_output'
 VIDEO_OUTPUT_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\static\\video_output'
 OUTPUT_MOVIES_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\static\\output_movies'
+ARM_CROSSED_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\static\\arm_crossed_folder'
+HEAD_SCRATCHING_FOLDER = 'C:\\Users\\toshi\\OneDrive\\ドキュメント\\myjlab\\openpose_webapp\\static\\head_scratching_folder'
+
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
 
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['JSON_OUTPUT_FOLDER'] = JSON_OUTPUT_FOLDER
 app.config['VIDEO_OUTPUT_FOLDER'] = VIDEO_OUTPUT_FOLDER
 app.config['OUTPUT_MOVIES_FOLDER'] = OUTPUT_MOVIES_FOLDER
+app.config['ARM_CROSSED_FOLDER'] = ARM_CROSSED_FOLDER
+app.config['HEAD_SCRATCHING_FOLDER'] = HEAD_SCRATCHING_FOLDER
 
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
-
+# フォルダを作成
 if not os.path.exists(app.config['JSON_OUTPUT_FOLDER']):
     os.makedirs(app.config['JSON_OUTPUT_FOLDER'])
 
@@ -33,95 +36,188 @@ if not os.path.exists(app.config['VIDEO_OUTPUT_FOLDER']):
 if not os.path.exists(app.config['OUTPUT_MOVIES_FOLDER']):
     os.makedirs(app.config['OUTPUT_MOVIES_FOLDER'])
 
+if not os.path.exists(app.config['ARM_CROSSED_FOLDER']):
+    os.makedirs(app.config['ARM_CROSSED_FOLDER'])
+
+if not os.path.exists(app.config['HEAD_SCRATCHING_FOLDER']):
+    os.makedirs(app.config['HEAD_SCRATCHING_FOLDER'])
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+def clear_folder(folder_path):
+    for file in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception as e:
+            print(f"Error deleting {file_path}: {e}")
 
-# def create_new_video(input_video_path, output_video_path, start_frame, end_frame):
-    cap = cv2.VideoCapture(input_video_path)
-    if not cap.isOpened():
-        print("Error: Could not open video file.")
-        return
+def find_arm_crossed_frames(json_data):
+    arm_crossed_frames = []
+    arm_crossing = False
+    start_frame = 0
 
-    frame_width = int(cap.get(3))
-    frame_height = int(cap.get(4))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    # JSONデータを解析して腕を組んでいるフレームを検出
+    for frame_index, person in enumerate(json_data['people']):
+        keypoints_2d = person['pose_keypoints_2d']
+        right_wrist_x = keypoints_2d[12]
+        left_wrist_x = keypoints_2d[21]
+        print(f"Frame {frame_index}: Right Wrist X = {right_wrist_x}, Left Wrist X = {left_wrist_x}")
 
-    # H.264コーデックを指定して新しい動画を作成
-    fourcc = cv2.VideoWriter_fourcc(*'H264')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+        if right_wrist_x > left_wrist_x:
+            # 右手首が左手首よりも左側にある場合、腕を組んでいると判断
+            if not arm_crossing:
+                # 腕を組んでいない状態から腕を組み始めた
+                arm_crossing = True
+                start_frame = frame_index  # 腕を組み始めたフレーム
+        elif arm_crossing:
+            # 腕を組んでいる状態で右手首が左手首を越えた
+            end_frame = frame_index  # 腕を組み終わったフレーム
+            arm_crossed_frames.append((start_frame, end_frame))
+            arm_crossing = False  # リセット
 
-    frame_number = 0
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
+    if arm_crossing:
+        # 最後のフレームで腕を組んでいる場合を処理
+        end_frame = frame_index
+        arm_crossed_frames.append((start_frame, end_frame))
 
-        frame_number += 1
+    return arm_crossed_frames
 
-        if frame_number >= start_frame and frame_number <= end_frame:
-            out.write(frame)
+def find_head_scratching_frames(json_data):
+    head_scratching_frames = []
+    head_scratching = False
+    start_frame = 0
 
-    cap.release()
-    out.release()
+    for frame_index, person in enumerate(json_data['people']):
+        keypoints_2d = person['pose_keypoints_2d']
+        right_wrist_x = keypoints_2d[12]
+        right_wrist_y = keypoints_2d[13]
+        left_wrist_x = keypoints_2d[21]
+        left_wrist_y = keypoints_2d[22]
+        right_ear_x = keypoints_2d[51]
+        right_ear_y = keypoints_2d[52]
+        left_ear_x = keypoints_2d[54]
+        left_ear_y = keypoints_2d[55]
 
-def create_new_video(input_video_path, output_video_path, start_frame, end_frame):
-    cap = cv2.VideoCapture(input_video_path)
-    if not cap.isOpened():
-        print("Error: Could not open video file.")
-        return
+        # 右手首と右耳のx軸およびy軸、左手首と左耳のx軸およびy軸が20以内の場合、頭をかいていると判断
+        if (abs(right_wrist_x - right_ear_x) < 20 and abs(right_wrist_y - right_ear_y) < 20) or (abs(left_wrist_x - left_ear_x) < 20 and abs(left_wrist_y - left_ear_y) < 20):
+            if not head_scratching:
+                head_scratching = True
+                start_frame = frame_index
+        elif head_scratching:
+            end_frame = frame_index
+            head_scratching_frames.append((start_frame, end_frame))
+            head_scratching = False
 
-    frame_width = int(cap.get(3))
-    frame_height = int(cap.get(4))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    if head_scratching:
+        end_frame = frame_index
+        head_scratching_frames.append((start_frame, end_frame))
 
-    # FFmpegコマンドでVP9でエンコード
-    ffmpeg_command = [
-        'ffmpeg',
-        '-i', input_video_path,
-        '-c:v', 'libvpx-vp9',
-        '-b:v', '1M',  # ビットレートを調整してください
-        '-c:a', 'libvorbis',
-        '-y',  # 存在する場合でも上書きする
-        output_video_path
-    ]
-    
-    subprocess.run(ffmpeg_command, shell=True)
+    return head_scratching_frames
 
-    cap.release()
+def create_new_video(video_path, output_folder, start_frame, end_frame, json_filename, action_type, fps):
+    video = VideoFileClip(video_path)
+    video_duration = video.duration
 
-def process_video_and_json(video_filename, video_path, extension):
-    # 動画をフレームに分割
-    cap = cv2.VideoCapture(video_path)
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    print("total_frames:", total_frames)
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    # start_frameとend_frameを秒数に変換
+    start_time = start_frame / fps
+    end_time = end_frame / fps
 
-    # 特定のJSONファイルを取得
-    target_json_filename = f"{video_filename}_000000000050_keypoints.json"
-    target_json_path = os.path.join(app.config['JSON_OUTPUT_FOLDER'], target_json_filename)
-    print("target_json_path:", target_json_path)
-    # JSONファイルが存在するか確認
-    if os.path.exists(target_json_path):
-        with open(target_json_path, 'r') as json_file:
-            data = json.load(json_file)
-            # ここでJSONデータを使用して必要な処理を行うことができます
+    # 前後に3秒追加
+    start_time = max(0, start_time - 3)  # 0秒より小さくならないように
+    end_time = min(video_duration, end_time + 3)  # 動画の長さを超えないように
 
-        # 該当する動画のフレームを取得
-        cap.set(cv2.CAP_PROP_POS_FRAMES, 50)  # 50フレーム目を取得
-        ret, frame = cap.read()
-        if ret:
-            # 前後20フレームを取得
-            start_frame = max(0, 50 - 50)
-            end_frame = min(total_frames, 50 + 150)
+    clip = video.subclip(start_time, end_time)
 
-            output_movie_path = os.path.join(app.config['OUTPUT_MOVIES_FOLDER'], f"{video_filename}_segment.mp4")
-            create_new_video(video_path, output_movie_path, start_frame, end_frame)
-            
-        cap.release()
-
+    # 出力ファイル名の作成
+    minutes = int(start_time // 60)
+    seconds = int(start_time % 60)
+    if minutes > 0:
+        filename_time = f"{minutes}m{seconds}s"
     else:
-        print("JSON file not found.")
+        filename_time = f"{seconds}s"
+
+    # 動作の種類によってフォルダを選択
+    if action_type == "arm_crossed":
+        output_folder = app.config['ARM_CROSSED_FOLDER']
+    elif action_type == "head_scratching":
+        output_folder = app.config['HEAD_SCRATCHING_FOLDER']
+
+    output_movie_path = os.path.join(output_folder, f"{action_type}_{filename_time}.mp4")
+    clip.write_videofile(output_movie_path)
+
+def process_video_and_json(video_path, video_folder, output_folder):
+    json_files = [f for f in os.listdir(video_folder) if f.endswith('_keypoints.json')]
+    start_frame_arm_crossed = None
+    end_frame_arm_crossed = None
+    start_frame_head_scratching = None
+    end_frame_head_scratching = None
+    cap = VideoFileClip(video_path)
+    fps = cap.fps
+
+    # フォルダをクリア
+    clear_folder(app.config['VIDEO_OUTPUT_FOLDER'])
+    clear_folder(app.config['ARM_CROSSED_FOLDER'])
+    clear_folder(app.config['HEAD_SCRATCHING_FOLDER'])
+
+    for json_filename in json_files:
+        json_file_path = os.path.join(video_folder, json_filename)
+
+        with open(json_file_path, 'r') as json_file:
+            json_data = json.load(json_file)
+            arm_crossed_frames = find_arm_crossed_frames(json_data)
+            head_scratching_frames = find_head_scratching_frames(json_data)
+
+            if not arm_crossed_frames and not head_scratching_frames:
+                print(f"{json_filename} で腕または頭をかいているフレームが見つかりませんでした")
+                continue
+
+            match = re.search(r'_(\d+)_keypoints.json', json_filename)
+            current_start_frame = int(match.group(1))
+            current_end_frame = int(match.group(1))
+
+            if arm_crossed_frames:
+                if start_frame_arm_crossed is None:
+                    start_frame_arm_crossed = current_start_frame
+                    end_frame_arm_crossed = current_end_frame
+                else:
+                    if current_start_frame == end_frame_arm_crossed + 1:
+                        end_frame_arm_crossed = current_end_frame
+                    else:
+                        if (end_frame_arm_crossed - start_frame_arm_crossed) / fps >= 5:
+                            # 5秒以上の動作のみを含む動画を作成
+                            create_new_video(video_path, output_folder, start_frame_arm_crossed, end_frame_arm_crossed, json_filename, "arm_crossed", fps)
+                            print(f"{json_filename} の腕を組んでいるフレーム: {start_frame_arm_crossed} - {end_frame_arm_crossed}")
+                        start_frame_arm_crossed = current_start_frame
+                        end_frame_arm_crossed = current_end_frame
+
+            if head_scratching_frames:
+                if start_frame_head_scratching is None:
+                    start_frame_head_scratching = current_start_frame
+                    end_frame_head_scratching = current_end_frame
+                else:
+                    if current_start_frame == end_frame_head_scratching + 1:
+                        end_frame_head_scratching = current_end_frame
+                    else:
+                        if (end_frame_head_scratching - start_frame_head_scratching) / fps >= 5:
+                            # 5秒以上の動作のみを含む動画を作成
+                            create_new_video(video_path, output_folder, start_frame_head_scratching, end_frame_head_scratching, json_filename, "head_scratching", fps)
+                            print(f"{json_filename} の頭をかいているフレーム: {start_frame_head_scratching} - {end_frame_head_scratching}")
+                        start_frame_head_scratching = current_start_frame
+                        end_frame_head_scratching = current_end_frame
+
+    if start_frame_arm_crossed is not None and end_frame_arm_crossed is not None:
+        if (end_frame_arm_crossed - start_frame_arm_crossed) / fps >= 5:
+            create_new_video(video_path, output_folder, start_frame_arm_crossed, end_frame_arm_crossed, json_filename, "arm_crossed", fps)
+    if start_frame_head_scratching is not None and end_frame_head_scratching is not None:
+        if (end_frame_head_scratching - start_frame_head_scratching) / fps >= 5:
+            create_new_video(video_path, output_folder, start_frame_head_scratching, end_frame_head_scratching, json_filename, "head_scratching", fps)
+
+    print("処理が完了しました。")
+
+
 
 @app.route('/')
 def index():
@@ -179,7 +275,12 @@ def upload():
             os.chdir(app.root_path)
 
             # 動画の分割と新しい動画の作成
-            process_video_and_json(video_filename, video_path, extension)
+            # process_video_and_json(video_filename, video_path, extension)
+            # 動画の分割と新しい動画の作成
+            json_output_folder = app.config['JSON_OUTPUT_FOLDER']
+            output_movies_folder = app.config['OUTPUT_MOVIES_FOLDER']
+
+            process_video_and_json(video_path, json_output_folder, output_movies_folder)
             return redirect(url_for('result', video_filename=video_filename + extension))
             # return redirect(url_for('result', video_filename=video_filename_with_extension))
 
@@ -187,24 +288,17 @@ def upload():
             flash('Invalid file type')
             return redirect(request.url)
 
-
-
 @app.route('/result')
 def result():
-    video_filename_with_extension = request.args.get('video_filename', '')
-    video_filename, extension = os.path.splitext(video_filename_with_extension)
+    uploaded_videos = os.listdir(app.config['VIDEO_OUTPUT_FOLDER'])
+    arm_crossed_videos = os.listdir(app.config['ARM_CROSSED_FOLDER'])
+    print("arm_crossed_videos:", arm_crossed_videos)
+    head_scratching_videos = os.listdir(app.config['HEAD_SCRATCHING_FOLDER'])
 
-    # 動画ファイルのパスを設定
-    video_path = os.path.join(app.config['VIDEO_OUTPUT_FOLDER'], video_filename_with_extension)
-    if not os.path.exists(video_path):
-        return "Video not found."
-
-    # video_urlを正しく生成
-    video_url = url_for('static', filename=f'video_output/{video_filename_with_extension}')
-    print("video_url:", video_url)
-    segment_video_url = url_for('static', filename=f'output_movies/{video_filename}_segment.mp4')
-
-    return render_template('result.html', video_url=video_url, video_extension=extension, segment_video_url=segment_video_url)
+    return render_template('result.html', 
+                           uploaded_videos=uploaded_videos, 
+                           arm_crossed_videos=arm_crossed_videos,
+                           head_scratching_videos=head_scratching_videos)
 
 
 if __name__ == '__main__':
