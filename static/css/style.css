@@ -71,7 +71,6 @@ video {
 
 .video-details a {
     text-decoration: none;
-    color: #007bff;
     font-weight: bold;
 }
 
@@ -115,14 +114,61 @@ video {
     cursor: pointer;
 }
 
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
-    margin: 0;
-    padding: 0;
+/* アップロード画面へ戻るボタンのスタイル */
+.back-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent; /* 背景を透明に変更 */
+    color: #333; /* 黒色に変更 */
+    padding: 10px 20px;
+    border: 2px solid #333; /* ボーダーを追加 */
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+    z-index: 1001; /* 最前面に表示 */
 }
 
-h1 {
-    font-size: 24px;
-    margin: 10px 0;
+.back-button a {
+    text-decoration: none;
+    color: #333; /* 黒色に変更 */
+}
+
+.back-button:hover {
+    background-color: transparent; /* ホバー時に背景を透明に保つ */
+}
+
+.upload-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f0f0; /* 背景色を白黒に設定 */
+}
+
+.upload-form {
+    background-color: #fff; /* フォームの背景色を白黒に設定 */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+.upload-form label, .upload-form input[type="file"], .upload-form input[type="submit"] {
+    margin: 10px;
+}
+
+.upload-form input[type="submit"] {
+    background-color: #333; /* ボタンの背景色を白黒に設定 */
+    color: #fff; /* ボタンのテキスト色を白に設定 */
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.upload-form input[type="submit"]:hover {
+    background-color: #555; /* ホバー時の背景色を変更 */
 }

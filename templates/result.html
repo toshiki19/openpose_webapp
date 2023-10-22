@@ -5,11 +5,14 @@
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <div class="back-button">
+        <a href="/">アップロード画面へ戻る</a>
+    </div>
     <div class="centered">
         <h1>Uploaded Videos</h1>
         <ul>
             {% for video in uploaded_videos %}
-                <video width="500" height="240" controls preload="none">
+                <video width="1000" height="500" controls preload="none">
                     <source src="{{ url_for('static', filename='video_output/' + video) }}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
@@ -59,9 +62,48 @@
                 {% endfor %}
             </ul>
         </div>
-    </div>
-    <div class="back-button">
-        <a href="/">戻る</a>
+
+        <div class="action-category">
+            <h1>Head Scratching Videos</h1>
+            <ul class="video-list">
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img src="{{ url_for('static', filename='images/hand_crossed_icon.jpg') }}" alt="Head Scratching Icon">
+                    </div>
+                    <div class="video-count">
+                        Total: {{ hand_crossed_videos|length }} videos
+                    </div>
+                </div>
+                {% for video in hand_crossed_videos %}
+                    <li>
+                        <div class="video-details">
+                            <a href="javascript:void(0);" class="popup-link" data-video-src="{{ url_for('static', filename='hand_crossed_folder/' + video) }}">{{ video }}</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <div class="action-category">
+            <h1>Head Scratching Videos</h1>
+            <ul class="video-list">
+                <div class="video-info">
+                    <div class="video-thumbnail">
+                        <img src="{{ url_for('static', filename='images/not_looking_at_audience_icon.jpg') }}" alt="Head Scratching Icon">
+                    </div>
+                    <div class="video-count">
+                        Total: {{ not_looking_at_audience_videos|length }} videos
+                    </div>
+                </div>
+                {% for video in not_looking_at_audience_videos %}
+                    <li>
+                        <div class="video-details">
+                            <a href="javascript:void(0);" class="popup-link" data-video-src="{{ url_for('static', filename='not_looking_at_audience_folder/' + video) }}">{{ video }}</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
 
     <!-- ポップアップ用のコンテンツ -->

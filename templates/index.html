@@ -6,11 +6,15 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Welcome to OpenPose WebApp</h1>
-    <form method="post" action="/upload" enctype="multipart/form-data">
-        <label for="file">Choose a video to analyze:</label>
-        <input type="file" name="file">
-        <input type="submit" value="Upload and Analyze">
-    </form>
+    <div class="upload-container"> <!-- 新しいクラスを適用 -->
+        <div class="upload-form"> <!-- 新しいクラスを適用 -->
+            <h1>Welcome to OpenPose WebApp</h1>
+            <form method="post" action="/upload" enctype="multipart/form-data">
+                <label for="file">Choose a video to analyze:</label>
+                <input type="file" name="file">
+                <input type="submit" value="Upload and Analyze">
+            </form>
+        </div>
+    </div>
 </body>
 </html>
